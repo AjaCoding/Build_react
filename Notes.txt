@@ -1,0 +1,214 @@
+Building my own React.js. 
+A declarative UI framework with virtual DOM reconciliation and hook-based state management. 
+
+project review: 
+Architecture diagram
+
+Performance comparisons
+
+Design tradeoffs
+
+“What I’d do differently next”
+
+Phase 0: 
+Skills to be comfortable with
+
+JavaScript (ES6+)
+
+Closures, immutability
+
+DOM APIs
+
+Functional programming basics
+
+Data structures (trees)
+
+Key ideas to review
+
+How the browser renders DOM
+
+Why DOM updates are expensive
+
+Why frameworks exist
+
+📌 Deliverable: You can manually create and update 
+    DOM nodes and understand why batching matters.
+
+Phase 1: Create a Minimal Renderer (Week 1)
+Goal
+
+Render UI from plain JS objects instead of HTML.
+Tasks
+
+Define a createElement function
+
+Convert object → real DOM
+
+Append to root container
+
+Skills learned
+
+Declarative UI
+
+Tree traversal
+
+DOM manipulation
+
+📌 Milestone: You can render a static UI without touching HTML.
+
+Phase 2: Components & Composition (Week 2)
+Goal
+
+Support functions as components
+like: function Hello(props) {
+  return createElement("h1", {}, `Hello ${props.name}`);
+}
+
+Tasks
+
+Detect when type is a function
+
+Call it to produce child elements
+
+Allow nested components
+
+Concepts
+
+Component trees
+
+Pure functions
+
+Props
+
+📌 Milestone: Components can call components.
+
+Phase 3: Virtual DOM & Diffing (Weeks 3–4)
+Goal
+
+Update only what changed.
+
+Tasks
+
+Store previous virtual tree
+
+Compare old vs new tree
+
+Generate minimal DOM operations
+
+Diffing basics
+
+Same node type → update props
+
+Different type → replace node
+
+Recurse on children
+
+Skills learned
+
+Tree diff algorithms
+
+Performance optimization
+
+Structural sharing
+
+📌 This alone is already a strong portfolio project
+
+Phase 4: State Management (Weeks 5–6)
+Goal
+
+Allow components to re-render based on state changes.
+
+Minimal API
+const [count, setCount] = useState(0);
+
+Start simpler:
+
+Global state store
+
+Component-local state map
+
+Re-render entire tree on state change
+
+Then improve:
+
+Only re-render affected subtree
+
+Preserve state between renders
+
+Concepts
+
+Closures
+
+Referential identity
+
+Render scheduling
+
+📌 Milestone: Clicking a button updates the UI declaratively.
+
+Phase 5: Event System (Week 7)
+Goal
+
+Handle events efficiently.
+
+Tasks
+
+Attach event handlers via props
+
+Normalize events
+
+Optional: event delegation
+
+Skills learned
+
+Browser event model
+
+Synthetic events
+
+Memory optimization
+
+Phase 6: Hooks & Lifecycle (Weeks 8–9)
+Goal
+
+Generalize state and effects.
+
+Implement:
+
+useState
+
+useEffect (basic)
+
+Dependency tracking
+
+Concepts
+
+Call order invariants
+
+Side-effect scheduling
+
+Cleanup handling
+
+📌 This is where things feel “React-ish”
+
+Phase 7: JSX (Optional, Weeks 10–11)
+Goal
+
+Developer ergonomics.
+
+Tasks
+
+Use Babel to transform JSX → createElement
+
+Build your own JSX pragma
+
+/** @jsx MyReact.createElement */
+
+Skills learned
+
+Tooling
+
+AST transforms
+
+Build pipelines
+
+Phase 8: Performance and Architecture (optional improvement)
+
