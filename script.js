@@ -1,4 +1,4 @@
-/* Last modified: 12/24/2025 
+/* Last modified: 1/1/2025 
     basically creating my own DOM API to use to make websites
 */
 
@@ -28,6 +28,11 @@ function createTextElement(text) {
 
 // render objects. element is the virtual dom object being rendered, in its container
 function render(element, container) {
+    if (typeof element.type === "function") {
+        const child = element.type(element.props);
+        return render(child, container);
+    }
+
   const dom =
     element.type === "TEXT_ELEMENT"
       ? document.createTextNode("")
@@ -55,6 +60,48 @@ function render(element, container) {
 
   container.appendChild(dom);
 }
+
+/* 
+  Functions
+  Take in: one argument (props)
+  returns: dom object
+*/
+
+function Hello(props) {
+  return createElement("h1", null, "Hello, " + props.name);
+}
+
+function Goodbye({ name }) {
+  return createElement("p", null, "Goodbye, " + name);
+}
+
+// Our new React tool name, isntead of React, use MyReact // can change later!
+const MyReact = {
+    createElement,
+    render
+};
+
+const container = document.getElementById("root")
+
+//MyReact.render(newElement, container)
+
+// Make container element App and add children(p, a, h1...)
+const App = MyReact.createElement(
+  "div",
+  { id: "app" },
+  MyReact.createElement("h1", {style: {color: "red"}}, "Hello from MyReact"),
+  MyReact.createElement("p", null, "This is Phase 1"),
+  MyReact.createElement("br", null, ""),
+  MyReact.createElement("a", {href: "https://www.google.com"}, "link here"),
+  MyReact.createElement("div", {id: "innerContent"}, 
+    MyReact.createElement("p", null, "This content is nested")
+  ),
+  MyReact.createElement(Hello, {name: "Aja"}),
+  MyReact.createElement(Goodbye, {name: "This"})
+);
+
+MyReact.render(App, container);
+
 
 // now create dom nodes
     //const dom = document.createElement(element.type)
@@ -88,11 +135,6 @@ function render(element, container) {
 
 
 
-// Our new React tool name, isntead of React, use MyReact // can change later!
-const MyReact = {
-    createElement,
-    render
-};
 
 // kinda making JSX
 // instead of calling it every element, use the new react tool
@@ -117,23 +159,3 @@ const MyReact = {
 
 // node.appendChild(text)                      // append the text node to the element object
 // CSSContainerRule.appendChild(node)          // append the node to the container it is in
-
-const container = document.getElementById("root")
-
-//MyReact.render(newElement, container)
-
-// Make container element App and add children(p, a, h1...)
-const App = MyReact.createElement(
-  "div",
-  { id: "app" },
-  MyReact.createElement("h1", {style: {color: "red"}}, "Hello from MyReact"),
-  MyReact.createElement("p", null, "This is Phase 1"),
-  MyReact.createElement("br", null, ""),
-  MyReact.createElement("a", {href: "https://www.google.com"}, "link here"),
-  MyReact.createElement("div", {id: "innerContent"}, 
-    MyReact.createElement("p", null, "This content is nested")
-  )
-);
-
-MyReact.render(App, container);
-
