@@ -1,6 +1,9 @@
-/* Last modified: 1/1/2025 
+/* Last modified: 1/6/2025 
     basically creating my own DOM API to use to make websites
 */
+
+let hookStates = []; // represents all vars needed across states
+let hookIndex = 0;
 
 /* Function to make an html element with
     type = element type aka div, p, h1,...
@@ -28,8 +31,21 @@ function createTextElement(text) {
 
 // render objects. element is the virtual dom object being rendered, in its container
 function render(element, container) {
+    function update() {
+      hookIndex = 0;
+      const container = document.getElementById("root");
+      container.innerHTML = "";
+      MyReact.render(App, container);
+    }
+
     if (typeof element.type === "function") {
-        const child = element.type(element.props);
+        // adding support for children
+        const propsWithChildren = {
+          ...element.props,
+          children: element.children
+        };
+
+        const child = element.type(propsWithChildren);
         return render(child, container);
     }
 
@@ -37,6 +53,8 @@ function render(element, container) {
     element.type === "TEXT_ELEMENT"
       ? document.createTextNode("")
       : document.createElement(element.type);
+  
+      console.log("Rendering:", element.type);
 
   // Apply props
   const isProperty = key => key !== "children";
@@ -44,10 +62,20 @@ function render(element, container) {
   // setProps()
   Object.keys(element.props).filter(isProperty)
     .forEach(name => {
-      console.log(name)
+      const value = element.props[name];
+
+      //console.log(name)
       if (name == "nodeValue") {
           dom.nodeValue = element.props[name];
-      } else {
+      } 
+      else if (name.startsWith("on")) {
+        const eventType = name.toLowerCase().substring(2);
+        dom.addEventListener(eventType, value);
+      }
+      else if (name === "style" && typeof value === "object") {
+        Object.assign(dom.style, value);
+      }
+      else {
           // Optional check here, adding a check for if the prop is boolean to keep it non-text
           dom.setAttribute(name, element.props[name]);
       }
@@ -61,6 +89,26 @@ function render(element, container) {
   container.appendChild(dom);
 }
 
+function useState(initialValue) {
+  const currentIndex = hookIndex;
+
+  hookStates[currentIndex] =
+    hookStates[currentIndex] !== undefined
+      ? hookStates[currentIndex]
+      : initialValue;
+
+  function setState(newValue) {
+    hookStates[currentIndex] = newValue;
+    update(); // trigger re-render
+  }
+
+  hookIndex++;
+  return [hookStates[currentIndex], setState];
+}
+
+
+
+
 /* 
   Functions
   Take in: one argument (props)
@@ -71,8 +119,30 @@ function Hello(props) {
   return createElement("h1", null, "Hello, " + props.name);
 }
 
-function Goodbye({ name }) {
-  return createElement("p", null, "Goodbye, " + name);
+function Goodbye({ name, children }) {
+  return createElement("p", null, "Goodbye, ", name, " ", ...children);
+}
+
+function MyComponent() {
+  return createElement(
+    "div",
+    null,
+    createElement(Hello, { name: "you ;)" },
+      createElement("span", null, "🌱")
+    ),
+    createElement(Footer, null)
+  );
+}
+
+function Footer() {
+  return createElement("p", null, "Footer content");
+}
+
+// Essential for keeping states, this updates the state so that events don't update DOM directly
+function update() {
+  const container = document.getElementById("root");
+  container.innerHTML = "";
+  MyReact.render(App, container);
 }
 
 // Our new React tool name, isntead of React, use MyReact // can change later!
@@ -86,22 +156,55 @@ const container = document.getElementById("root")
 //MyReact.render(newElement, container)
 
 // Make container element App and add children(p, a, h1...)
+// Here create an "extra" element to showcase use of function components with children
+// Attempting to create a table
+// And use/display a count variable <-- first
+// Handled with states: let count = 0;
+// vvv MyReact.createElement("button", { onclick: handleClick}, "Increment");
+
+function CreateCounterElement() {
+  const [count, setCount] = useState(0);
+
+  function increment() {
+    setCount(count + 1)
+    console.log("rendering Counter");
+    //update();  <-- not needed anymore, present in useState()
+  }
+
+  console.log("click handler ran");
+
+  return MyReact.createElement(
+    "div",
+    null,
+    MyReact.createElement("p", null, "Count is: ", count),
+    MyReact.createElement(
+      "button", 
+      { onClick: increment },
+      "Increment"
+    )
+  );
+};
+
 const App = MyReact.createElement(
   "div",
   { id: "app" },
   MyReact.createElement("h1", {style: {color: "red"}}, "Hello from MyReact"),
-  MyReact.createElement("p", null, "This is Phase 1"),
+  MyReact.createElement("p", null, "This is Phase 2"),
   MyReact.createElement("br", null, ""),
   MyReact.createElement("a", {href: "https://www.google.com"}, "link here"),
   MyReact.createElement("div", {id: "innerContent"}, 
-    MyReact.createElement("p", null, "This content is nested")
+    MyReact.createElement("p", null, "This content is nested"),
+    MyReact.createElement(CreateCounterElement, null)
   ),
   MyReact.createElement(Hello, {name: "Aja"}),
-  MyReact.createElement(Goodbye, {name: "This"})
+  MyReact.createElement(Goodbye, {name: "This"}),
+  MyReact.createElement(CreateCounterElement, null)
 );
 
-MyReact.render(App, container);
+const root = document.getElementById("root");
 
+// FINAL STEP: render elements, ONE call
+MyReact.render(App, root);
 
 // now create dom nodes
     //const dom = document.createElement(element.type)

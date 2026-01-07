@@ -82,6 +82,26 @@ Props
 
 📌 Milestone: Components can call components.
 
+Notes: Functions take in props as their argument(s) and usually it is only one var passed in. 
+The render function executes in a depth-first order. Rendering the main element, then it's children.
+Rule: render() always takes a VDOM element. createElement() wraps a function component. different purposes. 
+There is exactly one root element, so all elements need to be contained in it for rendering. 
+We have arrived at pre-hooks React now. 
+1/6: Today we added completed functions and events. We now have a working Count object element that can be re-used 
+across the site and successfuly incremenets across states. Next, I incremented states! This is purely index bookeeping 
+to ensure that the right variables are kept concurrent across states even when modified. This design helps to work 
+towards reconciliation, which uses the separated concerns: rendering, state storage, and state change. 
+At this point, we are nearly at a full basic React duplcation in our own fashion. We are able to dynamically
+make any html element, and even have a handler for onclick of a button element that updates another(an event!). 
+We render and update(re-render + states handling). 
+
+Before moving on: 
+1. Two useState calls in one component 
+2. Two Counter components on the page
+3. Logging hookStates each render 
+4. Breakign hook order intentionally and watching failure. 
+----> earned reconciliation
+
 Phase 3: Virtual DOM & Diffing (Weeks 3–4)
 Goal
 
