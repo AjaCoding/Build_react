@@ -102,6 +102,19 @@ Before moving on:
 4. Breakign hook order intentionally and watching failure. 
 ----> earned reconciliation
 
+1/13/2026: Following online tutorial is helping for this part, mainly learning about managing the units of work
+and getting to fibers. a fiber tree is the data structure used to handle concurrency in React. We use that to handle each unit of work for the DOM. 
+There is one fiber for each element and each fiber will be a unit of work. 
+The root fiber is set as nextUnitOfWork, the rest of the work wil happen on the performUnitOfWork function. 
+Three things for each fiber: 
+1. add the element to the DOM
+2. Create the fibers for the elements children
+3. Select the next unit of work.
+Use the fiber to course through all units of work needed for this moment. Go to each fibers/ children and if it does have a child, we use the sibling as the 
+next unit of work. If no child nor sibling, we go to the "uncle", so a siblin of the parent fiber. 
+
+- Phase 3 roughly finished 1/13/26
+
 Phase 3: Virtual DOM & Diffing (Weeks 3–4)
 Goal
 
@@ -132,6 +145,13 @@ Performance optimization
 Structural sharing
 
 📌 This alone is already a strong portfolio project
+
+Notes: We need to keep track of what changes each state and make sure the fibers are implemented 
+to correctly reflect it. this is where Work In Progress Root comes into play in render.  
+Hooks don't store state, they describe how a state is deived. Riber nodes store the memory.
+This separation enables concurrency, suspencec, transitions, selective rendering. 
+updateDom compares previous props -> next props and applies only the differences. It is not reconciliation, 
+it is DOM mutation logic, which are SEPARATE. 
 
 Phase 4: State Management (Weeks 5–6)
 Goal
