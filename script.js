@@ -11,6 +11,7 @@ let hookIndex = 0;
     children = DOM tree structure
 */
 function createElement(type, props, ...children) {
+    // console.log("Creating an element" + type) <-- shows this is working
     return {
         type, 
         props: props || {}, 
@@ -93,6 +94,7 @@ const isGone = (prev, next) => key => !(key in next)
 
 // DOM Mutation Logic
 function updateDom(dom, prevProps, nextProps) {
+  console.log("Updating the DOM")
   // Remove old or changed event listeners
   Object.keys(prevProps)
     .filter(isEvent)
@@ -138,6 +140,7 @@ function updateDom(dom, prevProps, nextProps) {
   we have added, and now need to update or delete nodes
 */
 function commitRoot() {
+  console.log("committing root")
   // TODO add nodes to dom
   deletions.forEach(commitWork)
   commitWork(wipRoot.child)
@@ -146,17 +149,25 @@ function commitRoot() {
 }
 
 function commitWork(fiber) {
+  console.log("committing work")
+
   if (!fiber) {
     return
   }
-  const domParent = fiber.parent.dom
+
+  let parentFiber = fiber.parent
+  while (!parentFiber.dom) {
+    parentFiber = parentFiber.parent
+  }
+
+  const domParent = parentFiber.dom
   //debugs :  
   console.log(
-    fiber.effectTag,
+    "Commit",
     fiber.type,
+    fiber.effectTag,
     fiber.dom
   )
-
   // handle effect tags for dom nodes
   if (fiber.effectTag === "PLACEMENT" &&
         fiber.dom != null) {
@@ -164,20 +175,22 @@ function commitWork(fiber) {
   } else if (fiber.effectTag === "UPDATE" && fiber.dom != null) {
     updateDom(
       fiber.dom,
-      fiber,alternate.props,
+      fiber.alternate.props,
       fiber.props
     )
   } 
-  
   else if (fiber.effectTag === "DELETION") {
     domParent.removeChild(fiber.dom)
+    return
   }
-  domParent.appendChild(fiber.dom)
+
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }
 
 function render(element, container) {
+  console.log("RENDER")
+
   wipRoot = {
     dom: container, 
     props: {
@@ -195,6 +208,8 @@ let wipRoot = null
 let deletions = null // keep track of nodes for removal
 
 function workLoop(deadline) {
+  console.log("implementing workLoop") //<-- THIS LOOPS CONTINUOUSLY 1/24
+
   let shouldYield = false
   while (nextUnitOfWork && !shouldYield) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork)
@@ -213,6 +228,7 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop)
 
 function performUnitOfWork(fiber) {
+  console.log("performing unit of work")
   // TODO 1/13/26 @ 6:00
   // Add dom node, create new fibers, return next unit of work
   if (!fiber.dom) {
@@ -226,9 +242,12 @@ function performUnitOfWork(fiber) {
 
   // For each child we create a new fiber
   const elements = fiber.props.children
+  console.log("Reconciling ch with" + elements)
+  //if (elements) {  
   reconcileChildren(fiber, elements)
+  //}
   
-  // fetch the ext unit of work if it exists
+  // fetch the next unit of work if it exists
   if (fiber.child) {
     return fiber.child
   }
@@ -244,14 +263,21 @@ function performUnitOfWork(fiber) {
   The element is the thing we want to render to the DOM and the oldFiber is what we rendered last time
 */
 function reconcileChildren(wipFiber, elements) {
+  console.log("called reconcileChildren")
+  // make elements an array to ensure children can be iterated over
+  // AND if elements is undefined, we can use it still
+  const arr = Array.isArray(elements)
+    ? elements
+    : [elements];
+
   let index = 0
   // alternate is the old fiber for this element
   let oldFiber = wipFiber.alternate && wipFiber.alternate.child 
   let prevSibling = null
-  while(index < elements.length || oldFiber != null) {
-    const element = elements[index]
+  while(index < arr.length || oldFiber != null) {
+    const element = arr[index]
 
-    const newFiber = null
+    let newFiber = null
     /* TODO compare oldFiber to element
      We compare the old and new to see if there are any changes to apply to DOM
      Three possible scenarios: 
@@ -294,7 +320,7 @@ function reconcileChildren(wipFiber, elements) {
 
     // Then we add the child to the fiber tree setting it as a child or a sibling
     if (index === 0) {
-      fiber.child = newFiber
+      wipFiber.child = newFiber
     } else {
       prevSibling.sibling = newFiber
     }
@@ -302,6 +328,14 @@ function reconcileChildren(wipFiber, elements) {
     prevSibling = newFiber
     index++
   }
+
+  console.log(
+    "Children of",
+    wipFiber.type,
+    "→",
+    wipFiber.child
+  )
+
 
 }
 
