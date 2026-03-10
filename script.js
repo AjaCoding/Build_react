@@ -1,9 +1,10 @@
-/* Last modified: 1/13/2025 
+/* Last modified: 3/9/2026 
     basically creating my own DOM API to use to make websites
 */
 
 //let hookStates = []; // represents all vars needed across states, replaced by fiber.hooks
-let hookIndex = 0;
+let hookIndex = null;
+let wipFiber = null;
 
 /* Function to make an html element with
     type = element type aka div, p, h1,...
@@ -14,10 +15,12 @@ function createElement(type, props, ...children) {
     // console.log("Creating an element" + type) <-- shows this is working
     return {
         type, 
-        props: props || {}, 
+        props: {
+          ...props, 
         children: children.map(child =>   
             typeof child === "object" ? child : createTextElement(child) // check text or object
-        )
+        ),
+      },
     };
 }
 
@@ -32,23 +35,23 @@ function createTextElement(text) {
 
 // render objects. element is the virtual dom object being rendered, in its container
 function createDom(fiber) {  // render --> createDom
-    function update() {
-      hookIndex = 0;
-      const container = document.getElementById("root");
-      container.innerHTML = "";
-      MyReact.render(App, container);
-    }
-    // element --> fiber ??????
-    if (typeof fiber.type === "function") {
-        // adding support for children
-        const propsWithChildren = {
-          ...fiber.props,
-          children: fiber.children
-        };
+    // function update() {
+    //   hookIndex = 0;
+    //   const container = document.getElementById("root");
+    //   container.innerHTML = "";
+    //   MyReact.render(App, container);
+    // }
+    // // element --> fiber ??????
+    // if (typeof fiber.type === "function") {
+    //     // adding support for children
+    //     const propsWithChildren = {
+    //       ...fiber.props,
+    //       children: fiber.children
+    //     };
 
-        const child = fiber.type(propsWithChildren);
-        return render(child, container);
-    }
+    //     const child = fiber.type(propsWithChildren);
+    //     return render(child, container);
+    // }
 
   const dom =
     fiber.type === "TEXT_ELEMENT"
@@ -229,28 +232,20 @@ requestIdleCallback(workLoop)
 
 function performUnitOfWork(fiber) {
   console.log("performing unit of work")
-  // TODO 1/13/26 @ 6:00
-  // Add dom node, create new fibers, return next unit of work
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber)
+
+  const isFunctionComponent = fiber.type instanceof Function
+
+  if (isFunctionComponent) {
+    updateFunctionComponent(fiber)
+  } else {
+    updateHostComponent(fiber)
   }
 
-  // fiber.dom property is used to keep track of DOM nodes
-  //if (fiber.parent) {
-  //  fiber.parent.dom.appendChild(fiber.dom)
-  //}
-
-  // For each child we create a new fiber
-  const elements = fiber.props.children
-  console.log("Reconciling ch with" + elements)
-  //if (elements) {  
-  reconcileChildren(fiber, elements)
-  //}
-  
-  // fetch the next unit of work if it exists
+  // Return next unit of work
   if (fiber.child) {
     return fiber.child
   }
+
   let nextFiber = fiber
   while (nextFiber) {
     if (nextFiber.sibling) {
@@ -259,6 +254,24 @@ function performUnitOfWork(fiber) {
     nextFiber = nextFiber.parent
   }
 }
+
+function updateFunctionComponent(fiber) {
+  wipFiber = fiber
+  hookIndex = 0
+  wipFiber.hooks = []
+
+  const children = [fiber.type(fiber.props)]
+  reconcileChildren(fiber, children)
+}
+
+function updateHostComponent(fiber) {
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber)
+  }
+
+  reconcileChildren(fiber, fiber.props.children)
+}
+
 /*
   The element is the thing we want to render to the DOM and the oldFiber is what we rendered last time
 */
@@ -314,9 +327,7 @@ function reconcileChildren(wipFiber, elements) {
       oldFiber.effectTag = "DELETION"
       deletions.push(oldFiber)
     } 
-    if (oldFiber) {
-      oldFiber = oldFiber.sibling
-    }
+    
 
     // Then we add the child to the fiber tree setting it as a child or a sibling
     if (index === 0) {
@@ -327,6 +338,9 @@ function reconcileChildren(wipFiber, elements) {
 
     prevSibling = newFiber
     index++
+    if (oldFiber) {
+      oldFiber = oldFiber.sibling
+    }
   }
 
   console.log(
@@ -341,9 +355,9 @@ function reconcileChildren(wipFiber, elements) {
 
 function useState(initial) {
   const oldHook =
-    currentFiber.alternate &&
-    currentFiber.alternate.hooks &&
-    currentFiber.alternate.hooks[hookIndex]
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex]
 
   // state machine: state-current value, queue-pending updates
   const hook = {
@@ -373,7 +387,7 @@ function useState(initial) {
     deletions = []
   }
 
-  currentFiber.hooks.push(hook)
+  wipFiber.hooks.push(hook)
   hookIndex++
 
   return [hook.state, setState]
@@ -384,11 +398,11 @@ function useState(initial) {
   Take in: one argument (props)
   returns: dom object
 */
-
+// Hello uses props as an object
 function Hello(props) {
   return createElement("h1", null, "Hello, " + props.name);
 }
-
+// Goodbye uses specific props listing
 function Goodbye({ name, children }) {
   return createElement("p", null, "Goodbye, ", name, " ", ...children);
 }
@@ -405,7 +419,13 @@ function MyComponent() {
 }
 
 function Footer() {
-  return createElement("p", null, "Footer content");
+  return createElement("p", {
+    style: {
+      textAlign: "center",
+      marginTop: "40px",
+      color: "#888"
+    }
+  }, "Footer content");
 }
 
 // Essential for keeping states, this updates the state so that events don't update DOM directly
@@ -425,6 +445,41 @@ const container = document.getElementById("root")
 
 //MyReact.render(newElement, container)
 
+function Header() {
+  return MyReact.createElement(
+    "header",
+    {
+      style: {
+        backgroundColor: "#20232a",
+        color: "#61dafb",
+        padding: "20px",
+        textAlign: "center",
+        fontSize: "1.5em",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+      }
+    },
+    "MyReact App"
+  );
+}
+
+function Card({ title, children }) {
+  return MyReact.createElement(
+    "div",
+    {
+      style: {
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        padding: "20px",
+        margin: "20px 0",
+        boxShadow: "0 4px 8px 0 rgba(0,0,0,0.1)",
+        backgroundColor: "white"
+      }
+    },
+    MyReact.createElement("h3", { style: { marginTop: "0", borderBottom: "1px solid #eee", paddingBottom: "10px", color: "#333" } }, title),
+    ...(children || [])
+  );
+}
+
 // Make container element App and add children(p, a, h1...)
 // Here create an "extra" element to showcase use of function components with children
 // Attempting to create a table
@@ -436,9 +491,10 @@ function CreateCounterElement() {
   const [count, setCount] = useState(0);
 
   function increment() {
-    setCount(count + 1)
+    setCount(c => c+1)
+    setCount(c => c+1)
+
     console.log("rendering Counter");
-    //update();  <-- not needed anymore, present in useState()
   }
 
   console.log("click handler ran");
@@ -455,46 +511,92 @@ function CreateCounterElement() {
   );
 };
 
-function Counter() {
-  const [count, setCount] = MyReact.useState(0)
+function CounterName() {
+  const [count, setCount] = useState(5);
+  const [name, setName] = useState("Aja:))))")
+
+  function increment() {
+    setCount(count + 2)
+    setName(name + ". s")
+    console.log("rendering Counter");
+  }
+
+  console.log("click handler ran");
 
   return MyReact.createElement(
-    "button",
-    {
-      onClick: () => setCount(c => c + 1)
-    },
-    "Count: ", count
-  )
+    "div",
+    null,
+    MyReact.createElement("p", null, "Count is: ", count),
+    MyReact.createElement("p", null, "Hi", name),
+    MyReact.createElement(
+      "button", 
+      { onClick: increment },
+      "Increment"
+    )
+  );
 }
 
 
 function Toggle() {
-  const [on, setOn] = MyReact.useState(false)
+  const [on, setOn] = useState(false)
+
+  /* 
+  function toggleIt() {
+    setOn(o => !o)
+    console.log("toggling thisssssss")
+  } */
 
   return MyReact.createElement(
-    "button",
-    { onClick: () => setOn(o => !o) },
-    on ? "ON" : "OFF"
-  )
+    "div",
+    null,
+    MyReact.createElement(
+      "button",
+      { onClick: () => setOn(o => !o) },
+      on ? "ON" : "OFF"
+    ) 
+  );
+
+  
 }
 
 
 const App = MyReact.createElement(
   "div",
-  { id: "app" },
-  MyReact.createElement("h1", {style: {color: "red"}}, "Hello from MyReact"),
-  MyReact.createElement("p", null, "This is Phase 2"),
-  MyReact.createElement("br", null, ""),
-  MyReact.createElement("a", {href: "https://www.google.com"}, "link here"),
-  MyReact.createElement("div", {id: "innerContent"}, 
-    MyReact.createElement("p", null, "This content is nested"),
-    MyReact.createElement(CreateCounterElement, null)
+  {
+    id: "app",
+    style: {
+      fontFamily: "Arial, sans-serif",
+      backgroundColor: "#f0f2f5",
+      color: "#333",
+      margin: 0,
+      padding: 0
+    }
+  },
+  MyReact.createElement(Header, null),
+  MyReact.createElement(
+    "main",
+    {
+      style: {
+        padding: "20px",
+        maxWidth: "900px",
+        margin: "0 auto"
+      }
+    },
+    MyReact.createElement(Card, { title: "Interactive Components" },
+      MyReact.createElement(CreateCounterElement, null),
+      MyReact.createElement(CounterName, null),
+      MyReact.createElement(Toggle, null)
+    ),
+    MyReact.createElement(Card, { title: "Greetings" },
+       MyReact.createElement(Hello, {name: "Aja"}),
+       MyReact.createElement(Goodbye, {name: "World"}, "See you later!"),
+    ),
+    MyReact.createElement(Card, { title: "More Info" },
+      MyReact.createElement("p", null, "This is a demonstration of a more complex layout using custom components."),
+      MyReact.createElement("a", {href: "https://react.dev/", target: "_blank"}, "Learn more about React")
+    )
   ),
-  MyReact.createElement(Hello, {name: "Aja"}),
-  MyReact.createElement(Counter, null),
-  MyReact.createElement(Toggle, null),
-  MyReact.createElement(Goodbye, {name: "This"})
-  //MyReact.createElement(CreateCounterElement, null)
+  MyReact.createElement(Footer, null)
 );
 
 const root = document.getElementById("root");
