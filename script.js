@@ -99,7 +99,7 @@ const isGone = (prev, next) => key => !(key in next)
 
 // DOM Mutation Logic
 function updateDom(dom, prevProps, nextProps) {
-  console.log("Updating the DOM")
+  //console.log("Updating the DOM")
   // Remove old or changed event listeners
   Object.keys(prevProps)
     .filter(isEvent)
@@ -145,7 +145,7 @@ function updateDom(dom, prevProps, nextProps) {
   we have added, and now need to update or delete nodes
 */
 function commitRoot() {
-  console.log("committing root")
+  //console.log("committing root")
   // TODO add nodes to dom
   deletions.forEach(commitWork)
   commitWork(wipRoot.child)
@@ -154,7 +154,7 @@ function commitRoot() {
 }
 
 function commitWork(fiber) {
-  console.log("committing work")
+  //console.log("committing work")
 
   if (!fiber) {
     return
@@ -213,7 +213,7 @@ let wipRoot = null
 let deletions = null // keep track of nodes for removal
 
 function workLoop(deadline) {
-  console.log("implementing workLoop") //<-- THIS LOOPS CONTINUOUSLY 1/24
+  //console.log("implementing workLoop") //<-- THIS LOOPS CONTINUOUSLY 1/24
 
   let shouldYield = false
   while (nextUnitOfWork && !shouldYield) {
@@ -233,7 +233,7 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop)
 
 function performUnitOfWork(fiber) {
-  console.log("performing unit of work")
+  //console.log("performing unit of work")
 
   const isFunctionComponent = fiber.type instanceof Function
 
@@ -278,7 +278,7 @@ function updateHostComponent(fiber) {
   The element is the thing we want to render to the DOM and the oldFiber is what we rendered last time
 */
 function reconcileChildren(wipFiber, elements) {
-  console.log("called reconcileChildren")
+  //console.log("called reconcileChildren")
   // make elements an array to ensure children can be iterated over
   // AND if elements is undefined, we can use it still
   const arr = Array.isArray(elements)
@@ -501,10 +501,10 @@ function CreateCounterElement() {
     setCount(c => c+1)
     setCount(c => c+1)
 
-    console.log("rendering Counter");
+    //console.log("rendering Counter");
   }
 
-  console.log("click handler ran");
+  //console.log("click handler ran");
 
   return MyReact.createElement(
     "div",
@@ -525,10 +525,10 @@ function CounterName() {
   function increment() {
     setCount(count + 2)
     setName(name + ". s")
-    console.log("rendering Counter");
+    //console.log("rendering Counter");
   }
 
-  console.log("click handler ran");
+  //console.log("click handler ran");
 
   return MyReact.createElement(
     "div",
@@ -659,15 +659,15 @@ function build(given) {
 
 //const newBuild = build(elementsList);
 // here import {docElements } from '.builder.js';
-const Builder = MyReact.createElement(
-  "div", 
-  {
-    id: "main",
-  }, 
-  MyReact.createElement("h1", null, "MyReact Builder"),
-  newBuild
+// const Builder = MyReact.createElement(
+//   "div", 
+//   {
+//     id: "main",
+//   }, 
+//   MyReact.createElement("h1", null, "MyReact Builder"),
+//   newBuild
   
-);
+// );
 
 //const root = document.getElementById("root");
 const root = document.getElementById("rootContainer");
@@ -675,7 +675,7 @@ const root = document.getElementById("rootContainer");
 console.log(root);
 
 // FINAL STEP: render elements
-MyReact.render(Builder, root);
+//MyReact.render(Builder, root);
 
 
 // now create dom nodes

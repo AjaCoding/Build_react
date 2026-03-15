@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     myForm.addEventListener("submit", function(event) {
         event.preventDefault();
+        const root = document.getElementById("rootContainer");
+
+        console.log("HERE  IS ROOT",root);
 
         //const username = document.getElementById("p");
         const content = document.getElementById("p").value;
@@ -18,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         alert("You entered: " + content);    
         
-        build(docElements);
+        const Builder = build(docElements);
         MyReact.render(Builder, root);
 
     });
