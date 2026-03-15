@@ -1,4 +1,6 @@
-/* Last modified: 3/9/2026 
+/* 
+    Creating a React-like DOM API for building a webpage using pre-biult elements
+    Last modified: 3/9/2026 
     basically creating my own DOM API to use to make websites
 */
 
@@ -393,6 +395,11 @@ function useState(initial) {
   return [hook.state, setState]
 }
 
+
+
+
+// ******* Section Dedicated to creating pre-built elements ***********
+
 /* 
   Functions
   Take in: one argument (props)
@@ -555,11 +562,9 @@ function Toggle() {
       on ? "ON" : "OFF"
     ) 
   );
-
-  
 }
 
-
+// ******* "App" is for texting/example purposes and uses styling ***************
 const App = MyReact.createElement(
   "div",
   {
@@ -599,10 +604,79 @@ const App = MyReact.createElement(
   MyReact.createElement(Footer, null)
 );
 
-const root = document.getElementById("root");
 
-// FINAL STEP: render elements, ONE call
-MyReact.render(App, root);
+
+
+
+/* MAIN function to call from builder
+  Input: list of items chosen from form
+  Output: Creates App Element createElement call, then calls it. 
+    options here: Use this script.js file and have one div to show a preview of the created html page
+      or: Have builder.js call this function with the list, and have it use the script.js page itself as the new
+
+  CURRENTLY TESTING
+*/
+let elementsList = [["title", {id: "title"}, "Title here"],
+["p", null, "Content here"], 
+["h1", {id: "header"}, "Header here"]
+];
+
+function build(given) {
+
+  console.log("Building elements from list:", given);
+
+  // Store created elements
+  const children = [];
+
+  for (let i = 0; i < given.length; i++) {
+    console.log(
+      "Creating element:",
+      given[i][0],
+      "with props:",
+      given[i][1],
+      "and children:",
+      given[i][2]
+    );
+
+    const el = MyReact.createElement(
+      given[i][0],   // tag
+      given[i][1],   // props
+      given[i][2]    // children
+    );
+
+    children.push(el);
+  }
+
+  // Create parent container with generated children
+  const newB = MyReact.createElement(
+    "div",
+    { id: "holder" },
+    ...children
+  );
+
+  return newB;
+}
+
+//const newBuild = build(elementsList);
+// here import {docElements } from '.builder.js';
+const Builder = MyReact.createElement(
+  "div", 
+  {
+    id: "main",
+  }, 
+  MyReact.createElement("h1", null, "MyReact Builder"),
+  newBuild
+  
+);
+
+//const root = document.getElementById("root");
+const root = document.getElementById("rootContainer");
+
+console.log(root);
+
+// FINAL STEP: render elements
+MyReact.render(Builder, root);
+
 
 // now create dom nodes
     //const dom = document.createElement(element.type)
