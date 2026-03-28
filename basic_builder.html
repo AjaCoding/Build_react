@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Page Builder</title>
+
+  <!--
+  ====================================================
+    FONTS — swap these out for any Google Font you like
+    https://fonts.google.com
+  ====================================================
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ====================================================
+       COLOURS — edit these variables to restyle everything
+       ==================================================== */
+    :root {
+      --bg:         #f4f6f9;   /* page background */
+      --white:      #ffffff;   /* card / panel background */
+      --border:     #dde2ea;   /* border colour */
+      --text:       #2d3142;   /* main text */
+      --muted:      #7a8299;   /* labels and hints */
+      --accent:     #4f7ef8;   /* buttons and highlights */
+      --accent-lt:  #eaf0ff;   /* light accent tint */
+      --danger:     #f05a5a;   /* remove buttons */
+      --danger-lt:  #fff0f0;
+      --radius:     8px;       /* corner rounding */
+    }
+
+    /* ====================================================
+       BASE RESET
+       ==================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* ====================================================
+       PAGE LAYOUT — two columns side by side
+       ==================================================== */
+    .page-wrap {
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Left column: the form */
+    .col-form {
+      flex: 0 0 420px;          /* fixed width — change 420px to resize it */
+    }
+
+    /* Right column: the preview */
+    .col-preview {
+      flex: 1;                  /* takes up remaining space */
+    }
+
+    /* ====================================================
+       SHARED CARD STYLE
+       ==================================================== */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* ====================================================
+       BUTTONS
+       ==================================================== */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+      transition: opacity .15s, background .15s;
+    }
+    button:hover { opacity: .85; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-secondary {
+      background: var(--accent-lt);
+      color: var(--accent);
+    }
+    .btn-danger {
+      background: var(--danger-lt);
+      color: var(--danger);
+      padding: 4px 10px;
+      font-size: 13px;
+    }
+    .btn-small {
+      padding: 5px 10px;
+      font-size: 13px;
+    }
+
+    /* ====================================================
+       FORM FIELDS (labels + inputs)
+       ==================================================== */
+    .field {
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    /* Two fields side by side */
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+    .field-row .field { flex: 1; }
+
+    /* ====================================================
+       ADD-ELEMENT SECTION
+       ==================================================== */
+    .add-section {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .add-section .field {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    /* ====================================================
+       ELEMENT LIST — each added element row
+       ==================================================== */
+    #elementRows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* A single element row */
+    .el-row {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* Clickable header bar of the row */
+    .el-row-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .el-row-tag {
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent-lt);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-family: monospace;
+    }
+
+    .el-row-summary {
+      flex: 1;
+      font-size: 13px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* The expandable body of the row */
+    .el-row-body {
+      padding: 14px;
+      border-top: 1px solid var(--border);
+      display: none;           /* hidden by default — JS toggles this */
+    }
+    .el-row-body.open {
+      display: block;
+    }
+
+    /* Extra attributes key/value pairs */
+    .attr-pair {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+    .attr-pair input {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+    .attr-pair input:focus { border-color: var(--accent); }
+
+    /* ====================================================
+       EMPTY STATE (shown when no elements added yet)
+       ==================================================== */
+    .empty-msg {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* ====================================================
+       PREVIEW PANEL
+       ==================================================== */
+    .preview-box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 300px;
+      padding: 24px;
+    }
+
+    /* The code output box */
+    .code-box {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+
+    /* ====================================================
+       HEADER / TITLE BAR
+       ==================================================== */
+    .top-bar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .top-bar h1 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .top-bar span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================================================
+       TOP BAR
+       ================================================ -->
+  <div class="top-bar">
+    <h1>Page Builder</h1>
+    <span>Build with MyReact</span>
+  </div>
+
+  <div class="page-wrap">
+
+    <!-- ================================================
+         LEFT COLUMN — the form
+         ================================================ -->
+    <div class="col-form">
+
+      <!-- ADD NEW ELEMENT card -->
+      <div class="card">
+        <div class="card-title">Add an element</div>
+
+        <div class="add-section">
+          <div class="field">
+            <label for="tagPicker">Tag</label>
+            <!--
+              Add or remove <option> tags here to change
+              which element types are available
+            -->
+            <select id="tagPicker">
+              <option value="h1">h1 — Heading 1</option>
+              <option value="h2">h2 — Heading 2</option>
+              <option value="h3">h3 — Heading 3</option>
+              <option value="p" selected>p — Paragraph</option>
+              <option value="span">span — Inline text</option>
+              <option value="a">a — Link</option>
+              <option value="button">button</option>
+              <option value="div">div — Container</option>
+              <option value="section">section</option>
+              <option value="nav">nav</option>
+              <option value="input">input</option>
+              <option value="textarea">textarea</option>
+              <option value="select">select</option>
+              <option value="img">img</option>
+              <option value="video">video</option>
+              <option value="ul">ul — List</option>
+              <option value="li">li — List item</option>
+              <option value="hr">hr — Divider</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="addElement()">+ Add</button>
+        </div>
+      </div>
+
+      <!-- ELEMENT LIST card -->
+      <div class="card">
+        <div class="card-title">Elements <span id="elCount" style="font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+
+        <div id="elementRows">
+          <!-- Element rows are injected here by JS -->
+          <div class="empty-msg" id="emptyMsg">
+            No elements yet. Choose a tag above and click Add.
+          </div>
+        </div>
+      </div>
+
+      <!-- BUILD BUTTON -->
+      <button class="btn-primary" style="width:100%; padding:12px; font-size:16px;" onclick="runBuild()">
+        Build Page ▶
+      </button>
+
+    </div><!-- /col-form -->
+
+
+    <!-- ================================================
+         RIGHT COLUMN — preview
+         ================================================ -->
+    <div class="col-preview">
+
+      <div class="card">
+        <div class="card-title">Live Preview</div>
+        <!--
+          MyReact renders into this div.
+          You can change the id here, but also update
+          getElementById() in runBuild() below.
+        -->
+        <div class="preview-box" id="rootContainer">
+          <p style="color:#aaa; font-style:italic">
+            Add elements and click "Build Page" to see the output here.
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">elementsList output</div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">
+          This is the array passed into <code>build()</code> — copy it into your other JS files.
+        </p>
+        <div class="code-box" id="codeOutput">
+          // Click "Build Page" to generate output
+        </div>
+      </div>
+
+    </div><!-- /col-preview -->
+
+  </div><!-- /page-wrap -->
+
+
+  <script>
+    /* ====================================================
+       MYREACT — minimal implementation
+       Matches the API your builder.js uses:
+         MyReact.render(vnode, container)
+         build(elementsList) → vnode
+
+       SWAP THIS OUT: if you have your own MyReact file,
+       delete this block and add:
+         <script src="myreact.js"><\/script>
+       ==================================================== */
+    const MyReact = {
+
+      // Creates a virtual DOM node
+      createElement(tag, props, ...children) {
+        return { tag, props: props || {}, children: children.flat() };
+      },
+
+      // Renders a vnode into a real DOM container
+      render(vnode, container) {
+        container.innerHTML = '';
+        container.appendChild(MyReact._toDom(vnode));
+      },
+
+      // Converts a vnode to a real DOM element (internal)
+      _toDom(vnode) {
+        if (typeof vnode === 'string' || typeof vnode === 'number') {
+          return document.createTextNode(String(vnode));
+        }
+        if (Array.isArray(vnode)) {
+          const frag = document.createDocumentFragment();
+          vnode.forEach(v => frag.appendChild(MyReact._toDom(v)));
+          return frag;
+        }
+        const el = document.createElement(vnode.tag);
+        Object.entries(vnode.props || {}).forEach(([k, v]) => {
+          if (k === 'className') el.setAttribute('class', v);
+          else el.setAttribute(k, v);
+        });
+        (vnode.children || []).forEach(child => {
+          if (child != null) el.appendChild(MyReact._toDom(child));
+        });
+        return el;
+      }
+    };
+
+
+    /* ====================================================
+       BUILD — converts elementsList into a vnode tree
+       Format: [tag, propsOrNull, textContent]
+       ==================================================== */
+    function build(elementsList) {
+      const children = elementsList.map(function(entry) {
+        var tag     = entry[0];
+        var props   = entry[1] || {};    // null becomes {}
+        var content = entry[2] || '';
+
+        // Self-closing tags have no children
+        if (['input', 'img', 'hr', 'br', 'video'].includes(tag)) {
+          return MyReact.createElement(tag, props);
+        }
+
+        return MyReact.createElement(tag, props, content);
+      });
+
+      // Wrap everything in a single root div
+      return MyReact.createElement('div', {}, ...children);
+    }
+
+
+    /* ====================================================
+       STATE — the list of elements the user has added
+       Each element looks like:
+       {
+         id:          unique number,
+         tag:         e.g. "p",
+         elId:        the HTML id attribute (optional),
+         className:   the HTML class attribute (optional),
+         textContent: inner text (optional),
+         attrs:       [ {key, value}, ... ]  extra attributes
+       }
+       ==================================================== */
+    var elements = [];   // the main list
+    var nextId   = 1;    // used to give each element a unique id
+
+    // Tags that can hold text content
+    var TEXT_TAGS = ['h1','h2','h3','h4','p','span','a','strong','em',
+                     'button','label','li','textarea','pre','code'];
+
+    // Tags that are self-closing (no text content, no children)
+    var VOID_TAGS = ['input','img','hr','br','video'];
+
+
+    /* ====================================================
+       ADD ELEMENT — called by the "+ Add" button
+       ==================================================== */
+    function addElement() {
+      var tag = document.getElementById('tagPicker').value;
+
+      var newEl = {
+        id:          nextId++,
+        tag:         tag,
+        elId:        '',
+        className:   '',
+        textContent: '',
+        attrs:       []         // extra key/value attributes
+      };
+
+      elements.push(newEl);
+      renderList();             // re-draw the element list
+    }
+
+
+    /* ====================================================
+       REMOVE ELEMENT — called by each row's Remove button
+       ==================================================== */
+    function removeElement(id) {
+      elements = elements.filter(function(el) { return el.id !== id; });
+      renderList();
+    }
+
+
+    /* ====================================================
+       ADD / REMOVE EXTRA ATTRIBUTES
+       ==================================================== */
+    function addAttr(elId) {
+      var el = findEl(elId);
+      if (!el) return;
+      el.attrs.push({ key: '', value: '' });
+      renderList();
+    }
+
+    function removeAttr(elId, attrIndex) {
+      var el = findEl(elId);
+      if (!el) return;
+      el.attrs.splice(attrIndex, 1);
+      renderList();
+    }
+
+
+    /* ====================================================
+       LIVE UPDATE HANDLERS
+       These are called by oninput on each field so the
+       data stays in sync without a full re-render.
+       ==================================================== */
+    function updateField(id, field, value) {
+      var el = findEl(id);
+      if (!el) return;
+      el[field] = value;
+    }
+
+    function updateAttr(elId, attrIndex, key, value) {
+      var el = findEl(elId);
+      if (!el || !el.attrs[attrIndex]) return;
+      el.attrs[attrIndex][key] = value;
+    }
+
+
+    /* ====================================================
+       RENDER LIST — redraws all element rows in the form
+       ==================================================== */
+    function renderList() {
+      var container = document.getElementById('elementRows');
+      var countEl   = document.getElementById('elCount');
+
+      // Update the count label
+      countEl.textContent = '(' + elements.length + ')';
+
+      // If empty, show the placeholder message
+      if (elements.length === 0) {
+        container.innerHTML = '<div class="empty-msg" id="emptyMsg">No elements yet. Choose a tag above and click Add.</div>';
+        return;
+      }
+
+      // Build HTML for each element row
+      container.innerHTML = elements.map(function(el) {
+
+        var isText = TEXT_TAGS.includes(el.tag);
+        var isVoid = VOID_TAGS.includes(el.tag);
+
+        // Summary line shown in the collapsed header
+        var summary = [];
+        if (el.elId)        summary.push('#' + el.elId);
+        if (el.className)   summary.push('.' + el.className);
+        if (el.textContent) summary.push('"' + el.textContent.slice(0, 30) + '"');
+        var summaryText = summary.length ? summary.join(' ') : 'click to edit';
+
+        // Build the extra attributes HTML
+        var attrsHtml = el.attrs.map(function(attr, i) {
+          return '<div class="attr-pair">' +
+            '<input placeholder="key" value="' + esc(attr.key) + '" ' +
+              'oninput="updateAttr(' + el.id + ',' + i + ',\'key\',this.value)" />' +
+            '<input placeholder="value" value="' + esc(attr.value) + '" ' +
+              'oninput="updateAttr(' + el.id + ',' + i + ',\'value\',this.value)" />' +
+            '<button class="btn-danger" onclick="removeAttr(' + el.id + ',' + i + ')">✕</button>' +
+          '</div>';
+        }).join('');
+
+        return '' +
+          '<div class="el-row" id="row-' + el.id + '">' +
+
+            /* Row header (clickable to expand) */
+            '<div class="el-row-header" onclick="toggleRow(' + el.id + ')">' +
+              '<span class="el-row-tag">&lt;' + el.tag + '&gt;</span>' +
+              '<span class="el-row-summary">' + esc(summaryText) + '</span>' +
+              '<button class="btn-danger btn-small" ' +
+                'onclick="event.stopPropagation(); removeElement(' + el.id + ')">Remove</button>' +
+            '</div>' +
+
+            /* Row body (hidden until expanded) */
+            '<div class="el-row-body" id="body-' + el.id + '">' +
+
+              /* Tag selector */
+              '<div class="field">' +
+                '<label>Tag</label>' +
+                '<select onchange="updateField(' + el.id + ',\'tag\',this.value)">' +
+                  buildTagOptions(el.tag) +
+                '</select>' +
+              '</div>' +
+
+              /* id and class side by side */
+              '<div class="field-row">' +
+                '<div class="field">' +
+                  '<label>id</label>' +
+                  '<input placeholder="e.g. my-heading" value="' + esc(el.elId) + '" ' +
+                    'oninput="updateField(' + el.id + ',\'elId\',this.value)" />' +
+                '</div>' +
+                '<div class="field">' +
+                  '<label>class</label>' +
+                  '<input placeholder="e.g. hero-text" value="' + esc(el.className) + '" ' +
+                    'oninput="updateField(' + el.id + ',\'className\',this.value)" />' +
+                '</div>' +
+              '</div>' +
+
+              /* Text content (hidden for void/container tags) */
+              (isText && !isVoid ?
+                '<div class="field">' +
+                  '<label>Text content</label>' +
+                  '<textarea placeholder="Enter text..." ' +
+                    'oninput="updateField(' + el.id + ',\'textContent\',this.value)">' +
+                    esc(el.textContent) +
+                  '</textarea>' +
+                '</div>'
+              : '') +
+
+              /* Extra attributes */
+              '<div class="field">' +
+                '<label>Extra attributes</label>' +
+                '<div id="attrList-' + el.id + '">' + attrsHtml + '</div>' +
+                '<button class="btn-secondary btn-small" style="margin-top:6px" ' +
+                  'onclick="addAttr(' + el.id + ')">+ Add attribute</button>' +
+              '</div>' +
+
+            '</div>' + /* /el-row-body */
+          '</div>';   /* /el-row */
+
+      }).join('');
+    }
+
+
+    /* ====================================================
+       TOGGLE ROW — open / close an element row
+       ==================================================== */
+    function toggleRow(id) {
+      var body = document.getElementById('body-' + id);
+      if (!body) return;
+      body.classList.toggle('open');
+    }
+
+
+    /* ====================================================
+       RUN BUILD — converts form state to elementsList
+       and calls build() + MyReact.render()
+
+       This mirrors your original submit handler logic.
+       ==================================================== */
+    function runBuild() {
+      // 1. Convert form state into the elementsList format:
+      //    [ [tag, propsOrNull, textContent], ... ]
+      var elementsList = elements.map(function(el) {
+        var props = {};
+        if (el.elId)      props.id = el.elId;
+        if (el.className) props.className = el.className;
+        el.attrs.forEach(function(a) { if (a.key) props[a.key] = a.value; });
+
+        var propsOrNull = Object.keys(props).length ? props : null;
+        var content     = el.textContent || '';
+
+        return [el.tag, propsOrNull, content];
+      });
+
+      // 2. Log it (matches your original console.log loop)
+      console.log('Form submitted! elementsList:');
+      for (var i in elementsList) {
+        console.log(elementsList[i]);
+      }
+
+      // 3. Build the vnode tree and render it
+      var root    = document.getElementById('rootContainer');
+      var Builder = build(elementsList);
+      MyReact.render(Builder, root);
+
+      // 4. Show the elementsList code in the output box
+      document.getElementById('codeOutput').textContent =
+        'let elementsList = ' + JSON.stringify(elementsList, null, 2) + ';';
+    }
+
+
+    /* ====================================================
+       HELPER FUNCTIONS
+       ==================================================== */
+
+    // Find an element in the list by its id
+    function findEl(id) {
+      return elements.find(function(el) { return el.id === id; });
+    }
+
+    // Escape HTML special characters (prevents XSS in rendered strings)
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Build <option> tags for the tag dropdown
+    function buildTagOptions(selectedTag) {
+      var tags = [
+        'h1','h2','h3','p','span','a','button','strong','em',
+        'div','section','nav','header','footer','main',
+        'input','textarea','select','label',
+        'img','video','ul','li','hr'
+      ];
+      return tags.map(function(t) {
+        return '<option value="' + t + '"' + (t === selectedTag ? ' selected' : '') + '>' + t + '</option>';
+      }).join('');
+    }
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,865 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <script src="script.js" defer></script>
+
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #181818;
+      --surface2: #222222;
+      --border: #2e2e2e;
+      --border-hi: #404040;
+      --text: #e8e6e0;
+      --text-muted: #888;
+      --text-dim: #555;
+      --accent: #c8f060;
+      --accent-dim: #1e2a00;
+      --accent-text: #0f0f0f;
+      --danger: #ff5f5f;
+      --danger-dim: #2a0f0f;
+      --info: #60b8f0;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --serif: 'Instrument Serif', serif;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 480px 1fr;
+      grid-template-rows: 56px 1fr;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .topbar-brand h1 {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .topbar-brand span {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .topbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-hi);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn:hover { color: var(--text); border-color: var(--text-dim); }
+    .btn.primary {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+    .btn.primary:hover { opacity: .88; }
+    .btn.danger { color: var(--danger); border-color: var(--danger-dim); background: var(--danger-dim); }
+    .btn.danger:hover { border-color: var(--danger); }
+
+    /* ── Left panel: form ── */
+    .panel-form {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .panel-title {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+    }
+    .element-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .elements-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .elements-scroll::-webkit-scrollbar { width: 4px; }
+    .elements-scroll::-webkit-scrollbar-track { background: transparent; }
+    .elements-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 2rem;
+    }
+    .empty-state svg { opacity: .3; }
+    .empty-state p { font-size: 13px; line-height: 1.5; }
+
+    /* add element bar */
+    .add-bar {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .add-row {
+      display: flex;
+      gap: 8px;
+    }
+    .add-row select {
+      flex: 1;
+      padding: 8px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .add-row select:focus { border-color: var(--accent); }
+    .add-row select option { background: var(--surface2); }
+
+    /* element card */
+    .el-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color .15s;
+    }
+    .el-card:hover { border-color: var(--border-hi); }
+    .el-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .el-tag-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .el-summary {
+      font-size: 12px;
+      color: var(--text-muted);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .el-summary em { color: var(--text-dim); font-style: normal; }
+    .btn-remove-el {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 3px;
+      border-radius: 5px;
+      display: flex;
+      transition: color .15s, background .15s;
+    }
+    .btn-remove-el:hover { color: var(--danger); background: var(--danger-dim); }
+    .chevron-icon {
+      width: 13px;
+      height: 13px;
+      opacity: .35;
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .el-card.open .chevron-icon { transform: rotate(180deg); }
+
+    .el-fields {
+      display: none;
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .el-card.open .el-fields { display: block; }
+
+    .field-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .field-full { grid-column: 1 / -1; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      padding: 7px 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .15s;
+      width: 100%;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 64px; line-height: 1.5; font-family: var(--sans); }
+    .field input::placeholder,
+    .field textarea::placeholder { color: var(--text-dim); }
+
+    /* extra attrs */
+    .extra-attrs { margin-top: 10px; }
+    .extra-label {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      display: block;
+    }
+    .attr-rows { display: flex; flex-direction: column; gap: 5px; margin-bottom: 5px; }
+    .attr-row { display: flex; gap: 5px; }
+    .attr-row input {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-family: var(--mono);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .attr-row input:focus { border-color: var(--accent); }
+    .btn-rm-attr {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      flex-shrink: 0;
+      transition: color .15s, background .15s;
+    }
+    .btn-rm-attr:hover { color: var(--danger); background: var(--danger-dim); }
+    .btn-add-attr {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--info);
+      padding: 3px 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-add-attr:hover { opacity: .75; }
+
+    /* order controls */
+    .order-controls {
+      display: flex;
+      gap: 4px;
+      margin-left: 2px;
+    }
+    .btn-order {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 11px;
+      line-height: 1;
+      transition: color .15s, background .15s;
+    }
+    .btn-order:hover { color: var(--text); background: var(--surface2); }
+
+    /* ── Right panel: preview ── */
+    .panel-preview {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .preview-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .preview-tabs {
+      display: flex;
+      gap: 4px;
+    }
+    .tab-btn {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      background: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tab-btn.active {
+      background: var(--surface2);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .tab-btn:hover:not(.active) { color: var(--text-muted); }
+    .preview-area {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+    }
+    .preview-area::-webkit-scrollbar { width: 4px; }
+    .preview-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* rendered output frame */
+    #rootContainer {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      min-height: 300px;
+      padding: 24px;
+      color: #111;
+      font-family: sans-serif;
+      font-size: 16px;
+    }
+    #rootContainer.empty-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 14px;
+      font-style: italic;
+      font-family: var(--sans);
+    }
+
+    /* code output */
+    #codeOutput {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    #codeOutput.active { display: block; }
+    #rootContainer.hidden { display: none; }
+    .code-pre {
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre;
+      overflow-x: auto;
+    }
+    .code-pre::-webkit-scrollbar { height: 4px; }
+    .code-pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* status bar */
+    .status-bar {
+      padding: 8px 20px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .status-ok { color: var(--accent); }
+    .status-err { color: var(--danger); }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <h1>PageCraft</h1>
+      <span>builder</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="clearAll()">Clear</button>
+      <button class="btn primary" onclick="runBuild()">Build page ▶</button>
+    </div>
+  </header>
+
+  <!-- Left: form panel -->
+  <aside class="panel-form">
+    <div class="panel-header">
+      <span class="panel-title">Elements</span>
+      <span class="element-count" id="elCount">0 elements</span>
+    </div>
+
+    <div class="elements-scroll" id="elementsList">
+      <div class="empty-state" id="emptyState">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="4" y="4" width="10" height="10" rx="2"/><rect x="18" y="4" width="10" height="10" rx="2"/>
+          <rect x="4" y="18" width="10" height="10" rx="2"/><rect x="18" y="18" width="10" height="10" rx="2"/>
+        </svg>
+        <p>No elements yet.<br/>Choose a tag below and click Add.</p>
+      </div>
+    </div>
+
+    <div class="add-bar">
+      <div class="add-row">
+        <select id="tagPicker">
+          <optgroup label="Text">
+            <option value="h1">h1 — Heading 1</option>
+            <option value="h2">h2 — Heading 2</option>
+            <option value="h3">h3 — Heading 3</option>
+            <option value="p" selected>p — Paragraph</option>
+            <option value="span">span — Inline text</option>
+            <option value="a">a — Link</option>
+            <option value="strong">strong — Bold</option>
+            <option value="em">em — Italic</option>
+          </optgroup>
+          <optgroup label="Containers">
+            <option value="div">div — Container</option>
+            <option value="section">section</option>
+            <option value="header">header</option>
+            <option value="footer">footer</option>
+            <option value="nav">nav</option>
+            <option value="main">main</option>
+            <option value="article">article</option>
+          </optgroup>
+          <optgroup label="Form / Input">
+            <option value="button">button</option>
+            <option value="input">input</option>
+            <option value="textarea">textarea</option>
+            <option value="label">label</option>
+            <option value="select">select</option>
+          </optgroup>
+          <optgroup label="Media / Other">
+            <option value="img">img</option>
+            <option value="ul">ul — List</option>
+            <option value="li">li — List item</option>
+            <option value="hr">hr — Divider</option>
+          </optgroup>
+        </select>
+        <button class="btn primary" onclick="addElement()">+ Add</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right: preview panel -->
+  <main class="panel-preview">
+    <div class="preview-header">
+      <div class="preview-tabs">
+        <button class="tab-btn active" id="tabPreview" onclick="switchTab('preview')">Preview</button>
+        <button class="tab-btn" id="tabCode" onclick="switchTab('code')">elementsList</button>
+      </div>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">
+        MyReact.render output
+      </span>
+    </div>
+    <div class="preview-area">
+      <div id="rootContainer" class="empty-preview">
+        Add elements and click "Build page" to see your output here.
+      </div>
+      <div id="codeOutput">
+        <pre class="code-pre" id="codePre"></pre>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span id="statusMsg">Ready</span>
+      <span id="statusCount"></span>
+    </div>
+  </main>
+
+  <script src="builder.js"></script>
+  <script>
+    
+
+    /* ─────────────────────────────────────────────
+       Form state
+    ───────────────────────────────────────────── */
+    let elements = [];   // [{id, tag, elId, className, textContent, attrs, children}]
+    let nodeCounter = 0;
+    let openCards = new Set();
+
+    const TEXT_TAGS = new Set(['h1','h2','h3','h4','p','span','a','strong','em','button','label','li','textarea','pre','code']);
+    const VOID_TAGS = new Set(['input','img','hr','br']);
+    const CONTAINER_TAGS = new Set(['div','section','header','footer','nav','main','article','ul','ol','form','table','select']);
+
+    function makeNode(tag) {
+      return { uid: ++nodeCounter, tag, elId: '', className: '', textContent: '', attrs: [], children: [] };
+    }
+
+    function addElement() {
+      const tag = document.getElementById('tagPicker').value;
+      const node = makeNode(tag);
+      elements.push(node);
+      openCards.add(node.uid);
+      renderForm();
+    }
+
+    function removeElement(uid) {
+      elements = elements.filter(e => e.uid !== uid);
+      openCards.delete(uid);
+      renderForm();
+    }
+
+    function moveElement(uid, dir) {
+      const idx = elements.findIndex(e => e.uid === uid);
+      const swapIdx = idx + dir;
+      if (swapIdx < 0 || swapIdx >= elements.length) return;
+      [elements[idx], elements[swapIdx]] = [elements[swapIdx], elements[idx]];
+      renderForm();
+    }
+
+    function toggleCard(uid) {
+      if (openCards.has(uid)) openCards.delete(uid);
+      else openCards.add(uid);
+      const card = document.getElementById('card-' + uid);
+      if (card) card.classList.toggle('open');
+    }
+
+    function updateField(uid, field, value) {
+      const node = elements.find(e => e.uid === uid);
+      if (!node) return;
+      node[field] = value;
+      // live-update the badge and summary without full re-render
+      if (field === 'tag') {
+        const badge = document.querySelector('#card-' + uid + ' .el-tag-badge');
+        if (badge) badge.textContent = '<' + value + '>';
+        // show/hide text field
+        const tf = document.getElementById('tf-' + uid);
+        if (tf) tf.style.display = TEXT_TAGS.has(value) ? '' : 'none';
+      }
+      updateSummary(uid);
+    }
+
+    function updateSummary(uid) {
+      const node = elements.find(e => e.uid === uid);
+      if (!node) return;
+      const el = document.querySelector('#card-' + uid + ' .el-summary');
+      if (!el) return;
+      const parts = [];
+      if (node.elId) parts.push('#' + node.elId);
+      if (node.className) parts.push('.' + node.className.trim().replace(/\s+/g, '.'));
+      if (node.textContent) parts.push('"' + node.textContent.slice(0, 28) + (node.textContent.length > 28 ? '…' : '') + '"');
+      el.innerHTML = parts.length ? parts.join(' ') : '<em>no props set</em>';
+    }
+
+    function addAttr(uid) {
+      const node = elements.find(e => e.uid === uid);
+      if (!node) return;
+      node.attrs.push({ key: '', value: '' });
+      renderForm();
+      setTimeout(() => {
+        const rows = document.querySelectorAll('#attrs-' + uid + ' .attr-row');
+        if (rows.length) { const inp = rows[rows.length-1].querySelector('input'); if (inp) inp.focus(); }
+      }, 20);
+    }
+
+    function removeAttr(uid, idx) {
+      const node = elements.find(e => e.uid === uid);
+      if (!node) return;
+      node.attrs.splice(idx, 1);
+      renderForm();
+    }
+
+    function updateAttr(uid, idx, key, value) {
+      const node = elements.find(e => e.uid === uid);
+      if (!node || !node.attrs[idx]) return;
+      node.attrs[idx][key] = value;
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ─────────────────────────────────────────────
+       Render the form UI
+    ───────────────────────────────────────────── */
+    function renderForm() {
+      const list = document.getElementById('elementsList');
+      const empty = document.getElementById('emptyState');
+      const countEl = document.getElementById('elCount');
+      countEl.textContent = elements.length + ' element' + (elements.length !== 1 ? 's' : '');
+
+      if (elements.length === 0) {
+        list.innerHTML = '';
+        const e = document.getElementById('emptyState') || createEmptyState();
+        list.appendChild(e);
+        return;
+      }
+
+      if (empty && empty.parentNode) empty.remove();
+
+      list.innerHTML = elements.map((node, idx) => {
+        const isOpen = openCards.has(node.uid);
+        const isText = TEXT_TAGS.has(node.tag);
+        const isVoid = VOID_TAGS.has(node.tag);
+
+        const labelParts = [];
+        if (node.elId) labelParts.push('#' + esc(node.elId));
+        if (node.className) labelParts.push('.' + esc(node.className.trim().replace(/\s+/g, '.')));
+        if (node.textContent) labelParts.push('"' + esc(node.textContent.slice(0,28)) + (node.textContent.length>28?'…':'') + '"');
+        const summary = labelParts.length ? labelParts.join(' ') : '<em>no props set</em>';
+
+        const tagOpts = [
+          ['h1','h2','h3','p','span','a','strong','em'],
+          ['div','section','header','footer','nav','main','article','ul','li'],
+          ['button','input','textarea','label','select'],
+          ['img','hr']
+        ].flat().map(t => `<option value="${t}"${t===node.tag?' selected':''}>${t}</option>`).join('');
+
+        const attrsHtml = node.attrs.map((a, i) => `
+          <div class="attr-row">
+            <input placeholder="key" value="${esc(a.key)}" oninput="updateAttr(${node.uid},${i},'key',this.value)" />
+            <input placeholder="value" value="${esc(a.value)}" oninput="updateAttr(${node.uid},${i},'value',this.value)" />
+            <button class="btn-rm-attr" onclick="removeAttr(${node.uid},${i})">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8">
+                <line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/>
+              </svg>
+            </button>
+          </div>`).join('');
+
+        return `
+        <div class="el-card${isOpen?' open':''}" id="card-${node.uid}">
+          <div class="el-card-head" onclick="toggleCard(${node.uid})">
+            <span class="el-tag-badge">&lt;${esc(node.tag)}&gt;</span>
+            <span class="el-summary">${summary}</span>
+            <div class="order-controls" onclick="event.stopPropagation()">
+              <button class="btn-order" onclick="moveElement(${node.uid},-1)" title="Move up">↑</button>
+              <button class="btn-order" onclick="moveElement(${node.uid},1)" title="Move down">↓</button>
+            </div>
+            <button class="btn-remove-el" onclick="event.stopPropagation();removeElement(${node.uid})" title="Remove">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8">
+                <line x1="2" y1="2" x2="11" y2="11"/><line x1="11" y1="2" x2="2" y2="11"/>
+              </svg>
+            </button>
+            <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,6 8,10 12,6"/>
+            </svg>
+          </div>
+          <div class="el-fields">
+            <div class="field-group">
+              <div class="field field-full">
+                <label>Element type</label>
+                <select onchange="updateField(${node.uid},'tag',this.value)">${tagOpts}</select>
+              </div>
+              <div class="field">
+                <label>id</label>
+                <input placeholder="my-id" value="${esc(node.elId)}" oninput="updateField(${node.uid},'elId',this.value)" />
+              </div>
+              <div class="field">
+                <label>class</label>
+                <input placeholder="my-class" value="${esc(node.className)}" oninput="updateField(${node.uid},'className',this.value)" />
+              </div>
+              <div class="field field-full" id="tf-${node.uid}" style="${isText && !isVoid ?'':'display:none'}">
+                <label>Text content</label>
+                <textarea placeholder="Enter text content..." oninput="updateField(${node.uid},'textContent',this.value)">${esc(node.textContent)}</textarea>
+              </div>
+            </div>
+            <div class="extra-attrs">
+              <span class="extra-label">Extra attributes</span>
+              <div class="attr-rows" id="attrs-${node.uid}">${attrsHtml}</div>
+              <button class="btn-add-attr" onclick="addAttr(${node.uid})">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5.5" y1="1" x2="5.5" y2="10"/><line x1="1" y1="5.5" x2="10" y2="5.5"/>
+                </svg>
+                Add attribute
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ─────────────────────────────────────────────
+       Convert form state → elementsList array
+       Output: [tag, propsOrNull, textContent]
+       Matches your exact format exactly
+    ───────────────────────────────────────────── */
+    function toElementsList(nodeList) {
+      return nodeList.map(node => {
+        // Build props object
+        const props = {};
+        if (node.elId) props.id = node.elId;
+        if (node.className) props.className = node.className;
+        node.attrs.forEach(a => { if (a.key) props[a.key] = a.value; });
+        const propsOrNull = Object.keys(props).length ? props : null;
+
+        // Content: nested children array OR text string
+        const content = node.children.length
+          ? toElementsList(node.children)
+          : (node.textContent || '');
+
+        return [node.tag, propsOrNull, content];
+      });
+    }
+
+    /* ─────────────────────────────────────────────
+       Run build + render (your submit handler logic)
+    ───────────────────────────────────────────── */
+    function runBuild() {
+      const root = document.getElementById('rootContainer');
+      root.classList.remove('empty-preview');
+
+      try {
+        const docElements = toElementsList(elements);
+        const Builder = build(docElements);
+        MyReact.render(Builder, root);
+
+        setStatus('Built ' + elements.length + ' element' + (elements.length !== 1 ? 's' : '') + ' successfully', 'ok');
+
+        // If code tab active, update it too
+        if (document.getElementById('tabCode').classList.contains('active')) {
+          showCodeOutput(docElements);
+        }
+      } catch(e) {
+        setStatus('Error: ' + e.message, 'err');
+        console.error(e);
+      }
+    }
+
+    function clearAll() {
+      elements = [];
+      openCards.clear();
+      nodeCounter = 0;
+      renderForm();
+      const root = document.getElementById('rootContainer');
+      root.innerHTML = 'Add elements and click "Build page" to see your output here.';
+      root.classList.add('empty-preview');
+      document.getElementById('codePre').textContent = '';
+      setStatus('Ready');
+    }
+
+    /* ─────────────────────────────────────────────
+       Tab switching
+    ───────────────────────────────────────────── */
+    function switchTab(tab) {
+      const previewEl = document.getElementById('rootContainer');
+      const codeEl = document.getElementById('codeOutput');
+      document.getElementById('tabPreview').classList.toggle('active', tab === 'preview');
+      document.getElementById('tabCode').classList.toggle('active', tab === 'code');
+
+      if (tab === 'preview') {
+        previewEl.classList.remove('hidden');
+        codeEl.classList.remove('active');
+      } else {
+        previewEl.classList.add('hidden');
+        codeEl.classList.add('active');
+        showCodeOutput(toElementsList(elements));
+      }
+    }
+
+    function showCodeOutput(docElements) {
+      const lines = ['let elementsList = ' + JSON.stringify(docElements, null, 2) + ';'];
+      document.getElementById('codePre').textContent = lines.join('\n');
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.className = type === 'ok' ? 'status-ok' : type === 'err' ? 'status-err' : '';
+    }
+
+    /* ─────────────────────────────────────────────
+       Wire up your original submit-style event
+       (keeps your builder.js pattern intact)
+    ───────────────────────────────────────────── */
+    const myForm = { addEventListener: (ev, fn) => { if (ev === 'submit') window._builderSubmit = fn; } };
+    myForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      const docElements = toElementsList(elements);
+      console.log('Form submitted! elementsList:');
+      for (let i in docElements) { console.log(docElements[i]); }
+      const root = document.getElementById('rootContainer');
+      const Builder = build(docElements);
+      MyReact.render(Builder, root);
+    });
+
+    // Init
+    renderForm();
+  </script>
+</body>
+</html>
